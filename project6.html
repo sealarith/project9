@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Polynomial Factorizer</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; background-color: #f7f7f7; }
+    h1 { color: #333; }
+    input, button { padding: 10px; margin: 10px 0; font-size: 16px; }
+    button { cursor: pointer; }
+    .output { margin-top: 20px; background: #fff; padding: 20px; border-radius: 5px; }
+    code { background: #eee; padding: 2px 5px; border-radius: 3px; }
+  </style>
+</head>
+<body>
+
+  <h1>Polynomial Rational Root Finder</h1>
+  <p>Enter a cubic polynomial in the form <code>ax^3 + bx^2 + cx + d</code></p>
+
+  <label>Enter coefficients (a b c d):</label><br>
+  <input type="text" id="coefficients" placeholder="e.g., 1 -6 11 -6" size="30">
+  <br>
+  <button onclick="findRoots()">Find Rational Roots</button>
+
+  <div class="output" id="result"></div>
+
+  <script>
+    function gcd(a, b) {
+      while (b) [a, b] = [b, a % b];
+      return a;
+    }
+
+    function simplifyFraction(numerator, denominator) {
+      let divisor = gcd(Math.abs(numerator), Math.abs(denominator));
+      return (denominator < 0 ? [-numerator, -denominator] : [numerator, denominator]).map(n => n / divisor);
+    }
+
+    function findRoots() {
+      const input = document.getElementById("coefficients").value.trim();
+      const resultDiv = document.getElementById("result");
+      const parts = input.split(/\s+/).map(Number);
+      resultDiv.innerHTML = "";
+
+      if (parts.length !== 4 || parts.some(isNaN)) {
+        resultDiv.innerHTML = "<b style='color:red'>Please enter exactly four valid numbers.</b>";
+        return;
+      }
+
+      const [a, b, c, d] = parts;
+      resultDiv.innerHTML += `<p>Polynomial: <b>${a}x^3 ${b >= 0 ? '+' : ''}${b}x^2 ${c >= 0 ? '+' : ''}${c}x ${d >= 0 ? '+' : ''}${d}</b></p>`;
+
+      const pFactors = [], qFactors = [], rationalRootSet = new Set();
+      const possibleRootsDisplay = new Set();
+
+      for (let i = 1; i <= Math.abs(d); i++) {
+        if (d % i === 0) pFactors.push(i);
+      }
+      for (let i = 1; i <= Math.abs(a); i++) {
+        if (a % i === 0) qFactors.push(i);
+      }
+
+      const pSet = [...pFactors, ...pFactors.map(x => -x)];
+      const qSet = [...qFactors, ...qFactors.map(x => -x)];
+      resultDiv.innerHTML += `<p>p (factors of constant term): ${pSet.join(', ')}</p>`;
+      resultDiv.innerHTML += `<p>q (factors of leading coefficient): ${qSet.join(', ')}</p>`;
+
+      const possibleRoots = new Set();
+
+      for (const p of pSet) {
+        for (const q of qSet) {
+          const [num, den] = simplifyFraction(p, q);
+          possibleRoots.add(`${num}/${den}`);
+        }
+      }
+
+      resultDiv.innerHTML += `<p>Possible Rational Roots: ${Array.from(possibleRoots).join(', ')}</p>`;
+
+      let hasRoot = false;
+      for (const rootStr of possibleRoots) {
+        const [num, den] = rootStr.split('/').map(Number);
+        const val = num / den;
+        const polyVal = a * val ** 3 + b * val ** 2 + c * val + d;
+        if (Math.abs(polyVal) < 1e-6) {
+          resultDiv.innerHTML += `<p>✔️ Rational Root: <b>x = ${rootStr}</b></p>`;
+          hasRoot = true;
+        }
+      }
+
+      if (!hasRoot) {
+        resultDiv.innerHTML += "<p style='color:red'><b>No rational roots found. Try other factoring methods like synthetic division or use the quadratic formula.</b></p>";
+      }
+    }
+  </script>
+</body>
+</html>
